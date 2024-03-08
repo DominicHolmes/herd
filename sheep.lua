@@ -13,6 +13,27 @@ function Sheep:new(x, y)
     self.action = Action.grazing
 end
 
+function Sheep.update(self, dt)
+    if self.action == Action.grazing then
+        -- 1/60 chance each frame to start walking
+        if love.math.random(1, 60) == 1 then
+            self.action = Action.walking
+            self.velocity = {
+                x = love.math.random(-20, 20),
+                y = love.math.random(-20, 20)
+            }
+        end
+    elseif self.action == Action.walking then
+        -- 1/300 chance each frame to start grazing
+        if love.math.random(1, 300) == 1 then
+            self.action = Action.grazing
+            self.velocity = { x = 0, y = 0 }
+        end
+    end
+
+    Sheep.super.update(self, dt)
+end
+
 function Sheep:draw()
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 

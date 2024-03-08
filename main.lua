@@ -14,8 +14,8 @@ function love.load()
     for i, sheep in ipairs(sheeps) do
         if i % 2 == 1 then
             sheep.velocity = {
-                x = love.math.random(-100, 100),
-                y = love.math.random(-100, 100)
+                x = love.math.random(-20, 20),
+                y = love.math.random(-20, 20)
             }
             sheep.action = Sheep.Action.walking
         end
