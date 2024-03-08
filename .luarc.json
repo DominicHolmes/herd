@@ -1,0 +1,6 @@
+{
+  "diagnostics.globals": {
+    "love": true
+  },
+  "diagnostics.disable": ["lowercase-global"]
+}
