@@ -5,13 +5,14 @@ function love.load()
     }
 
     Sheep = require "sheep"
-    sheeps = {}
-    for i = 1, 100 do
+    SHEEPS = {}
+    NEIGHBORS = {}
+    for i = 1, 500 do
         local x = love.math.random(0, window_size.w)
         local y = love.math.random(0, window_size.h)
-        table.insert(sheeps, Sheep(x, y))
+        table.insert(SHEEPS, Sheep(x, y))
     end
-    for i, sheep in ipairs(sheeps) do
+    for i, sheep in ipairs(SHEEPS) do
         if i % 2 == 1 then
             sheep.velocity = {
                 x = love.math.random(-20, 20),
@@ -23,15 +24,17 @@ function love.load()
 end
 
 function love.update(dt)
-    for _, sheep in ipairs(sheeps) do
+    for _, sheep in ipairs(SHEEPS) do
         sheep:update(dt)
     end
 end
 
 function love.draw()
-    for _, sheep in ipairs(sheeps) do
+    for _, sheep in ipairs(SHEEPS) do
         sheep:draw()
     end
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
 end
 
 function love.keypressed(key)

@@ -16,27 +16,29 @@ function Sheep:new(x, y)
     self.action = Action.grazing
 end
 
-function Sheep:neighbors()
-    local nearest = {}
+function Sheep:update_neighbors()
     local v1 = self:center()
-    for i, neighbor in ipairs(sheeps) do
+    local n = {}
+    for _, neighbor in ipairs(SHEEPS) do
         if neighbor == self then goto continue end
         if neighbor:center():dist(v1) <= VISION_DISTANCE then
-            table.insert(nearest, neighbor)
+            n[neighbor] = true
         end
         ::continue::
     end
-    return nearest
+    NEIGHBORS[self] = n
 end
 
-function Sheep:update_velocity(dt)
-    if self == sheeps[1] then
-        local n = self:neighbors()
-        sheep_1_neighbors = set(n)
-    end
-end
+-- function Sheep:update_velocity(dt)
+--     if self == sheeps[1] then
+--         local n = self:neighbors()
+--         sheep_1_neighbors = set(n)
+--     end
+-- end
 
 function Sheep.update(self, dt)
+    self:update_neighbors()
+
     if self.action == Action.grazing then
         -- 1/60 chance each frame to start walking
         if love.math.random(1, 60) == 1 then
@@ -55,19 +57,17 @@ function Sheep.update(self, dt)
     end
 
     Sheep.super.update(self, dt)
-
-    self:update_velocity(dt)
 end
 
 function Sheep:draw()
     love.graphics.setColor(1, 1, 1)
-    if self == sheeps[1] then
+    if self == SHEEPS[1] then
         love.graphics.setColor(1, 0, 0, 0.2)
         local c = self:center()
         love.graphics.circle("line", c.x, c.y, VISION_DISTANCE)
         love.graphics.setColor(1, 0, 0)
     end
-    if sheep_1_neighbors[self] then
+    if NEIGHBORS[SHEEPS[1]][self] then
         love.graphics.setColor(0.5, 0.5, 0)
     end
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
