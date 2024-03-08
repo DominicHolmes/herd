@@ -1,7 +1,3 @@
-local enum = require "libs/enum"
-local set = require "libs/set"
-
-local vector = require "libs/hump/vector"
 local Entity = require "entity"
 local Sheep = Entity:extend()
 
@@ -9,7 +5,6 @@ local Action = enum { "grazing", "walking", "herding" }
 Sheep.Action = Action
 
 local VISION_DISTANCE = 80
-
 
 function Sheep:new(x, y)
     Sheep.super.new(self, x, y, 10, 10)
