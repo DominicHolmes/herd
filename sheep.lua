@@ -1,16 +1,39 @@
 local enum = require "libs/enum"
+local set = require "libs/set"
+
+local vector = require "libs/hump/vector"
 local Entity = require "entity"
 local Sheep = Entity:extend()
 
 local Action = enum { "grazing", "walking", "herding" }
 Sheep.Action = Action
 
-assert(Action.grazing == Action.grazing)
-assert(Action.grazing ~= Action.walking)
+local VISION_DISTANCE = 80
+
 
 function Sheep:new(x, y)
     Sheep.super.new(self, x, y, 10, 10)
     self.action = Action.grazing
+end
+
+function Sheep:neighbors()
+    local nearest = {}
+    local v1 = self:center()
+    for i, neighbor in ipairs(sheeps) do
+        if neighbor == self then goto continue end
+        if neighbor:center():dist(v1) <= VISION_DISTANCE then
+            table.insert(nearest, neighbor)
+        end
+        ::continue::
+    end
+    return nearest
+end
+
+function Sheep:update_velocity(dt)
+    if self == sheeps[1] then
+        local n = self:neighbors()
+        sheep_1_neighbors = set(n)
+    end
 end
 
 function Sheep.update(self, dt)
@@ -32,9 +55,21 @@ function Sheep.update(self, dt)
     end
 
     Sheep.super.update(self, dt)
+
+    self:update_velocity(dt)
 end
 
 function Sheep:draw()
+    love.graphics.setColor(1, 1, 1)
+    if self == sheeps[1] then
+        love.graphics.setColor(1, 0, 0, 0.2)
+        local c = self:center()
+        love.graphics.circle("line", c.x, c.y, VISION_DISTANCE)
+        love.graphics.setColor(1, 0, 0)
+    end
+    if sheep_1_neighbors[self] then
+        love.graphics.setColor(0.5, 0.5, 0)
+    end
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 
     if self.velocity.x ~= 0 or self.velocity.y ~= 0 then

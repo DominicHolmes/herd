@@ -1,4 +1,5 @@
 local Object = require "libs/classic"
+local vector = require "libs/hump/vector"
 
 local Entity = Object:extend()
 
@@ -27,6 +28,10 @@ function Entity:update(dt)
             self.y = 0
         end
     end
+end
+
+function Entity:center()
+    return vector(self.x + (self.w / 2), self.y + (self.h / 2))
 end
 
 return Entity
