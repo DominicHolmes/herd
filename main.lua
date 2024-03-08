@@ -7,35 +7,38 @@ function get_bucket_vector_from_number(b)
     return vector(i, j)
 end
 
+function get_bucket_number_from_vector(v)
+    return ((v.y - 1) * NUM_BUCKETS.x) + v.x
+end
+
+function get_bucket_number_from_pixel(v)
+    local bucket_i = math.min(1 + math.floor(v.x / VISION_RAD), NUM_BUCKETS.x)
+    local bucket_j = math.min(math.floor(v.y / VISION_RAD), NUM_BUCKETS.y - 1)
+    return bucket_i + (bucket_j * NUM_BUCKETS.y)
+end
+
 function get_buckets_surrounding(b)
     local i, j = get_bucket_vector_from_number(b):unpack()
     local nearby = {}
     for x = -1 + i, 1 + i do
         for y = -1 + j, 1 + j do
             -- Handle wraparound cases
-            if x == 0 then
+            if x <= 0 then
                 x = NUM_BUCKETS.x
             end
-            if y == 0 then
+            if y <= 0 then
                 y = NUM_BUCKETS.y
             end
-            if x == NUM_BUCKETS.x + 1 then
-                x = 0
+            if x >= NUM_BUCKETS.x + 1 then
+                x = 1
             end
-            if y == NUM_BUCKETS.y + 1 then
-                y = 0
+            if y >= NUM_BUCKETS.y + 1 then
+                y = 1
             end
             table.insert(nearby, vector(x, y))
         end
     end
     return nearby
-end
-
--- Convert from x,y to bucket number 1 through N
-function get_bucket_num(v)
-    local bucket_i = math.min(1 + math.floor(v.x / VISION_RAD), NUM_BUCKETS.x)
-    local bucket_j = math.min(math.floor(v.y / VISION_RAD), NUM_BUCKETS.y - 1)
-    return bucket_i + (bucket_j * NUM_BUCKETS.y)
 end
 
 local function setup_sheep()
@@ -70,7 +73,10 @@ local function setup_sheep()
         end
     end
 
-    print(get_buckets_surrounding(46))
+    for _, b in ipairs(get_buckets_surrounding(80)) do
+        -- print(b)
+        print(get_bucket_number_from_vector(b))
+    end
 
     -- 10 fps with 500 entities (unbucketed)
     for i = 1, 500 do
@@ -78,7 +84,7 @@ local function setup_sheep()
         local y = love.math.random(0, window_size.h)
         local new_sheep = Sheep(x, y)
         table.insert(SHEEPS, new_sheep)
-        local bucket_num = get_bucket_num(vector(x, y))
+        local bucket_num = get_bucket_number_from_pixel(vector(x, y))
         new_sheep.bucket_num = bucket_num
         BUCKETS[bucket_num][new_sheep] = true
     end
@@ -114,11 +120,11 @@ function love.update(dt)
 end
 
 function love.draw()
-    for _, vec in ipairs(get_buckets_surrounding(46)) do
+    for _, vec in ipairs(get_buckets_surrounding(18)) do
         local x = (vec.x - 1) * VISION_RAD
         local y = (vec.y - 1) * VISION_RAD
-        local bucket_num = ((vec.y - 1) * NUM_BUCKETS.x) + vec.x
-        if bucket_num == 46 then
+        local bucket_num = get_bucket_number_from_vector(vec)
+        if bucket_num == 18 then
             love.graphics.setColor(0, 1, 0, 0.5)
         else
             love.graphics.setColor(0, 1, 0, 0.2)
