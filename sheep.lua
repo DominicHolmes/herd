@@ -69,18 +69,19 @@ function Sheep:avoid_neighbors(power)
 end
 
 function Sheep:seek_flock_center(power)
-    local center = self:center()
-    local num_flock = 1
+    local avg_center = vector(0, 0)
+    local num_flock = 0
 
     for neighbor, _ in pairs(NEIGHBORS[self]) do
         if neighbor.action == Action.walking then
-            center = center + neighbor:center()
+            avg_center = avg_center + neighbor:center()
             num_flock = num_flock + 1
         end
     end
 
-    center = center / num_flock
-    self.velocity = self.velocity + ((center - self:center()) * power)
+    if num_flock == 0 then return end
+    avg_center = avg_center / num_flock
+    self.velocity = self.velocity + ((avg_center - self:center()) * power)
 end
 
 function Sheep:match_neighbors_velocities(power)
