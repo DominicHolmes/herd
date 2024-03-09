@@ -94,6 +94,23 @@ function Sheep:match_neighbor_velocity(power)
     return power * (avg_velocity - self.velocity)
 end
 
+function Sheep:avoid_obstacles(power)
+    local result = self:center() + self.velocity
+    local nudge = vector.zero
+    local nudge_amount = 10
+
+    if result.x < 0 then
+        nudge.x = nudge.x + nudge_amount
+    elseif result.x > window_size.w then
+        nudge.x = nudge.x - nudge_amount
+    elseif result.y < 0 then
+        nudge.y = nudge.y + nudge_amount
+    elseif result.y > window_size.h then
+        nudge.y = nudge.y - nudge_amount
+    end
+    return power * nudge
+end
+
 function Sheep.update(self, dt)
     -- if self.action == Action.grazing then
     --     -- 1/60 chance each frame to start walking
@@ -116,9 +133,10 @@ function Sheep.update(self, dt)
         local v1 = self:seek_flock_center(0.1)
         local v2 = self:avoid_neighbors(0.5)
         local v3 = self:match_neighbor_velocity(0.125)
+        local v4 = self:avoid_obstacles(0.5)
 
         -- apply flock behaviors to velocity
-        self.velocity = self.velocity + v1 + v2 + v3
+        self.velocity = self.velocity + v1 + v2 + v3 + v4
         if self.velocity:len() > 300 then
             self.velocity = self.velocity:normalizeInplace() * 300
         end
