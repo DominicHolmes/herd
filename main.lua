@@ -2,7 +2,7 @@
 -- steady 60 fps with 500 entities (bucketed)
 -- steady 30 fps with 1000 entities (bucketed)
 -- 20 fps with 1500, 12 fps with 2000 (bucketed)
-local NUM_SHEEP = 200
+local NUM_SHEEP = 50
 
 function get_bucket_vector_from_number(b)
     local i = (b % NUM_BUCKETS.x)
@@ -24,28 +24,40 @@ function get_bucket_vector_from_pixel(v)
 end
 
 function get_bucket_number_from_pixel(v)
-    return get_bucket_number_from_vector(get_bucket_vector_from_pixel(v))
+    local clamped_pixel_vector = v:clamp(0, window_size.w, 0, window_size.h)
+    return get_bucket_number_from_vector(
+        get_bucket_vector_from_pixel(clamped_pixel_vector)
+    )
 end
 
-function get_buckets_surrounding(b)
+function get_buckets_surrounding(b, wrap_around)
+    local wrap = wrap_around or true
     local i, j = get_bucket_vector_from_number(b):unpack()
     local nearby = {}
     for x = -1 + i, 1 + i do
         for y = -1 + j, 1 + j do
-            -- Handle wraparound cases
-            if x <= 0 then
-                x = NUM_BUCKETS.x
+            if wrap then
+                -- Handle wraparound cases
+                if x <= 0 then
+                    x = NUM_BUCKETS.x
+                end
+                if y <= 0 then
+                    y = NUM_BUCKETS.y
+                end
+                if x >= NUM_BUCKETS.x + 1 then
+                    x = 1
+                end
+                if y >= NUM_BUCKETS.y + 1 then
+                    y = 1
+                end
+                table.insert(nearby, vector(x, y))
+            else
+                -- Wraparound not supported, ignore invalid bucket numbers
+                if x < 1 or y < 1 or x > NUM_BUCKETS.x
+                    or y > NUM_BUCKETS.y then
+                    table.insert(nearby, vector(x, y))
+                end
             end
-            if y <= 0 then
-                y = NUM_BUCKETS.y
-            end
-            if x >= NUM_BUCKETS.x + 1 then
-                x = 1
-            end
-            if y >= NUM_BUCKETS.y + 1 then
-                y = 1
-            end
-            table.insert(nearby, vector(x, y))
         end
     end
     return nearby
@@ -54,7 +66,7 @@ end
 local function setup_sheep()
     local Sheep = require "sheep"
 
-    VISION_RAD = 50
+    VISION_RAD = 100
     SHEEPS = {}
     BUCKETS = {}
     NEIGHBORS = {}
@@ -115,7 +127,7 @@ end
 function love.draw()
     local highlight_bucket = SHEEPS[1].bucket
 
-    for _, vec in ipairs(get_buckets_surrounding(highlight_bucket)) do
+    for _, vec in ipairs(get_buckets_surrounding(highlight_bucket, false)) do
         local x = (vec.x - 1) * VISION_RAD
         local y = (vec.y - 1) * VISION_RAD
         local bucket_num = get_bucket_number_from_vector(vec)

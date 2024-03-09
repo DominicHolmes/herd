@@ -127,6 +127,17 @@ function vector:len()
     return sqrt(self.x * self.x + self.y * self.y)
 end
 
+local function clamp(min, val, max)
+    return math.max(min, math.min(val, max));
+end
+
+function vector:clamp(min_x, max_x, min_y, max_y)
+    return new(
+        clamp(min_x, self.x, max_x),
+        clamp(min_y, self.y, max_y)
+    )
+end
+
 function vector.dist(a, b)
     assert(isvector(a) and isvector(b), "dist: wrong argument types (<vector> expected)")
     local dx = a.x - b.x

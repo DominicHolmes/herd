@@ -23,15 +23,13 @@ function Sheep:update_neighbors()
 
     -- Update set of nearby neighbors, only checking the surrounding buckets
     NEIGHBORS[self] = {}
-    for _, bucket in ipairs(get_buckets_surrounding(self.bucket)) do
+    for _, bucket in ipairs(get_buckets_surrounding(self.bucket, false)) do
         local bucket_num = get_bucket_number_from_vector(bucket)
         for neighbor, _ in pairs(BUCKETS[bucket_num]) do
             if neighbor == self then goto continue end
             -- Check distance
             if neighbor:center():dist(pos) > VISION_RAD then goto continue end
             -- The point is close enough. Check the vision cone
-            -- -0.707
-
             -- When stationary, assume a 360 deg vision cone
             if self.velocity == vector(0, 0) then
                 NEIGHBORS[self][neighbor] = true
@@ -60,8 +58,6 @@ function Sheep:avoid_neighbors(power)
     for neighbor, _ in pairs(NEIGHBORS[self]) do
         if pos:dist(neighbor:center()) < maintain_distance then
             move = move - (neighbor:center() - pos)
-            -- move.x = move.x + (self.x - neighbor.x)
-            -- move.y = move.y + (self.y - neighbor.y)
         end
     end
     return move * power
@@ -76,7 +72,7 @@ function Sheep:seek_flock_center(power)
             num_flock = num_flock + 1
         end
     end
-    if num_flock == 0 then return vector.zero end
+    if num_flock == 0 then return vector(0, 0) end
     avg_center = avg_center / num_flock
     -- velocity vector to push a sheep toward the flock's center
     return power * (avg_center - self:center())
@@ -89,25 +85,37 @@ function Sheep:match_neighbor_velocity(power)
         avg_velocity = avg_velocity + neighbor.velocity
         num_flock = num_flock + 1
     end
-    if num_flock == 0 then return vector.zero end
+    if num_flock == 0 then return vector(0, 0) end
     avg_velocity = avg_velocity / num_flock
     return power * (avg_velocity - self.velocity)
 end
 
 function Sheep:avoid_obstacles(power)
-    local result = self:center() + (self.velocity * 0.1)
-    local nudge = vector.zero
-    local nudge_amount = 10
-
-    if result.x < 0 then
+    local result = self:center() + (self.velocity * 1)
+    local nudge = vector(0, 0)
+    local nudge_amount = 20
+    if result.x < 10 then
         nudge.x = nudge.x + nudge_amount
-    elseif result.x > window_size.w then
+    elseif result.x > window_size.w - 10 then
         nudge.x = nudge.x - nudge_amount
-    elseif result.y < 0 then
+    end
+    if result.y < 10 then
         nudge.y = nudge.y + nudge_amount
-    elseif result.y > window_size.h then
+    elseif result.y > window_size.h - 10 then
         nudge.y = nudge.y - nudge_amount
     end
+
+    -- -- Nudge is the inverse of velocity
+    -- if result.x < 10 then
+    --     nudge.x = -self.velocity.x
+    -- elseif result.x > window_size.w - 10 then
+    --     nudge.x = -self.velocity.x
+    -- end
+    -- if result.y < 10 then
+    --     nudge.y = -self.velocity.y
+    -- elseif result.y > window_size.h - 10 then
+    --     nudge.y = -self.velocity.y
+    -- end
     return power * nudge
 end
 
@@ -130,15 +138,16 @@ function Sheep.update(self, dt)
 
     if self.action == Action.walking then
         self:update_neighbors()
-        local v1 = self:seek_flock_center(0.1)
-        local v2 = self:avoid_neighbors(0.5)
-        local v3 = self:match_neighbor_velocity(0.125)
-        local v4 = self:avoid_obstacles(0.5)
+        local v1 = self:seek_flock_center(5)
+        local v2 = self:avoid_neighbors(10)
+        local v3 = self:match_neighbor_velocity(2)
+        local v4 = self:avoid_obstacles(10)
+        local total_dv = (v1 + v2 + v3 + v4) * dt
 
         -- apply flock behaviors to velocity
-        self.velocity = self.velocity + v1 + v2 + v3 + v4
-        if self.velocity:len() > 300 then
-            self.velocity = self.velocity:normalizeInplace() * 300
+        self.velocity = self.velocity + total_dv
+        if self.velocity:len() > 200 then
+            self.velocity = self.velocity:normalizeInplace() * 200
         end
     end
 
@@ -151,7 +160,7 @@ function Sheep:draw()
     if self == SHEEPS[1] then
         love.graphics.setColor(1, 1, 0)
         local c = self:center()
-        if self.velocity == vector.zero then
+        if self.velocity == vector(0, 0) then
             love.graphics.circle("line", c.x, c.y, VISION_RAD)
         else
             local angle_to_vel = self.velocity:angleTo(vector(1, 0))
@@ -170,8 +179,8 @@ function Sheep:draw()
     if self.velocity.x ~= 0 or self.velocity.y ~= 0 then
         -- Draw a line that represents the direction of velocity
         love.graphics.setColor(0, 1, 0, 0.5)
-        local vel_x = self.x + (self.w / 2) + (self.velocity.x * 0.1)
-        local vel_y = self.y + (self.h / 2) + (self.velocity.y * 0.1)
+        local vel_x = self.x + (self.w / 2) + (self.velocity.x * 0.4)
+        local vel_y = self.y + (self.h / 2) + (self.velocity.y * 0.4)
         love.graphics.line(self.x + (self.w / 2), self.y + (self.h / 2), vel_x, vel_y)
         love.graphics.setColor(1, 1, 1)
     end
