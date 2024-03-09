@@ -84,10 +84,10 @@ local function setup_sheep()
 
     for i, sheep in ipairs(SHEEPS) do
         if i % 2 == 1 then
-            sheep.velocity = {
-                x = love.math.random(-30, 30),
-                y = love.math.random(-30, 30)
-            }
+            sheep.velocity = vector(
+                love.math.random(-30, 30),
+                love.math.random(-30, 30)
+            )
             sheep.action = Sheep.Action.walking
         end
     end

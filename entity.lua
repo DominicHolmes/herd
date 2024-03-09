@@ -8,7 +8,7 @@ function Entity:new(x, y, w, h)
     self.y = y
     self.w = w
     self.h = h
-    self.velocity = { x = 0, y = 0 }
+    self.velocity = vector(0, 0)
 end
 
 function Entity:update(dt)

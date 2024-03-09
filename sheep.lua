@@ -35,33 +35,87 @@ function Sheep:update_neighbors()
     end
 end
 
--- function Sheep:update_velocity(dt)
---     if self == sheeps[1] then
---         local n = self:neighbors()
---         sheep_1_neighbors = set(n)
---     end
--- end
+function Sheep:avoid_neighbors(dt)
+    local maintain_distance = 20 -- distance to maintain from other sheep
+    local avoid_power = 0.1      -- scale the power of avoidance effect
+
+    local move = vector(0, 0)
+    local pos = self:center()
+    for neighbor, _ in pairs(NEIGHBORS[self]) do
+        if pos:dist(neighbor:center()) < maintain_distance then
+            move.x = move.x + (self.x - neighbor.x)
+            move.y = move.y + (self.y - neighbor.y)
+        end
+    end
+
+    self.velocity.x = self.velocity.x + (move.x * avoid_power)
+    self.velocity.y = self.velocity.y + (move.y * avoid_power)
+end
+
+function Sheep:seek_flock_center(dt)
+    local centering_power = 0.05
+
+    local center = self:center()
+    local num_flock = 1
+
+    for neighbor, _ in pairs(NEIGHBORS[self]) do
+        if neighbor.action == Action.walking then
+            center = center + neighbor:center()
+            num_flock = num_flock + 1
+        end
+    end
+
+    center = center / num_flock
+    self.velocity = self.velocity + ((center - self:center()) * centering_power)
+end
+
+function Sheep:match_neighbors_velocities(dt)
+    local matching_power = 0.01 -- adjustable, controls the power of the effect
+
+    local avg_velocity = vector(0, 0)
+    local walkers = 0
+
+    for neighbor, _ in pairs(NEIGHBORS[self]) do
+        if neighbor.action == Action.walking then
+            avg_velocity = avg_velocity + neighbor.velocity
+            walkers = walkers + 1
+        end
+    end
+
+    if walkers == 0 then
+        return
+    end
+
+    avg_velocity = avg_velocity / walkers
+    self.velocity = self.velocity + ((avg_velocity - self.velocity) * matching_power)
+    -- self.velocity.x = (avg_velocity.x - self.velocity.x) * matching_power
+    -- self.velocity.y = self.velocity.y + (avg_velocity.y * matching_power)
+end
 
 function Sheep.update(self, dt)
     if self.action == Action.grazing then
         -- 1/60 chance each frame to start walking
         if love.math.random(1, 60) == 1 then
             self.action = Action.walking
-            self.velocity = {
-                x = love.math.random(-20, 20),
-                y = love.math.random(-20, 20)
-            }
+            self.velocity = vector(
+                love.math.random(-20, 20), love.math.random(-20, 20)
+            )
         end
-    elseif self.action == Action.walking then
-        -- 1/300 chance each frame to start grazing
-        if love.math.random(1, 300) == 1 then
-            self.action = Action.grazing
-            self.velocity = { x = 0, y = 0 }
-        end
+        -- elseif self.action == Action.walking then
+        --     -- 1/300 chance each frame to start grazing
+        --     if love.math.random(1, 10000) == 1 then
+        --         self.action = Action.grazing
+        --         self.velocity = vector(0, 0)
+        --     end
     end
 
     Sheep.super.update(self, dt)
-    self:update_neighbors()
+    if self.action == Action.walking then
+        self:update_neighbors()
+        self:seek_flock_center(dt)
+        self:avoid_neighbors(dt)
+        self:match_neighbors_velocities(dt)
+    end
 end
 
 function Sheep:draw()
