@@ -53,80 +53,76 @@ function Sheep:update_neighbors()
 end
 
 function Sheep:avoid_neighbors(power)
-    local maintain_distance = 15 -- distance to maintain from other sheep
-
+    -- distance to maintain from other sheep
+    local maintain_distance = 15
     local move = vector(0, 0)
     local pos = self:center()
     for neighbor, _ in pairs(NEIGHBORS[self]) do
         if pos:dist(neighbor:center()) < maintain_distance then
-            move.x = move.x + (self.x - neighbor.x)
-            move.y = move.y + (self.y - neighbor.y)
+            move = move - (neighbor:center() - pos)
+            -- move.x = move.x + (self.x - neighbor.x)
+            -- move.y = move.y + (self.y - neighbor.y)
         end
     end
-
-    self.velocity.x = self.velocity.x + (move.x * power)
-    self.velocity.y = self.velocity.y + (move.y * power)
+    return move * power
 end
 
 function Sheep:seek_flock_center(power)
     local avg_center = vector(0, 0)
     local num_flock = 0
-
     for neighbor, _ in pairs(NEIGHBORS[self]) do
         if neighbor.action == Action.walking then
             avg_center = avg_center + neighbor:center()
             num_flock = num_flock + 1
         end
     end
-
-    if num_flock == 0 then return end
+    if num_flock == 0 then return vector.zero end
     avg_center = avg_center / num_flock
-    self.velocity = self.velocity + ((avg_center - self:center()) * power)
+    -- velocity vector to push a sheep toward the flock's center
+    return power * (avg_center - self:center())
 end
 
-function Sheep:match_neighbors_velocities(power)
+function Sheep:match_neighbor_velocity(power)
     local avg_velocity = vector(0, 0)
-    local walkers = 0
-
+    local num_flock = 0
     for neighbor, _ in pairs(NEIGHBORS[self]) do
-        if neighbor.action == Action.walking then
-            avg_velocity = avg_velocity + neighbor.velocity
-            walkers = walkers + 1
-        end
+        avg_velocity = avg_velocity + neighbor.velocity
+        num_flock = num_flock + 1
     end
-
-    if walkers == 0 then
-        return
-    end
-
-    avg_velocity = avg_velocity / walkers
-    self.velocity = self.velocity + ((avg_velocity - self.velocity) * power)
+    if num_flock == 0 then return vector.zero end
+    avg_velocity = avg_velocity / num_flock
+    return power * (avg_velocity - self.velocity)
 end
 
 function Sheep.update(self, dt)
-    if self.action == Action.grazing then
-        -- 1/60 chance each frame to start walking
-        if love.math.random(1, 60) == 1 then
-            self.action = Action.walking
-            self.velocity = vector(
-                love.math.random(50, 60), love.math.random(50, 60)
-            )
-        end
-        -- elseif self.action == Action.walking then
-        --     -- 1/300 chance each frame to start grazing
-        --     if love.math.random(1, 10000) == 1 then
-        --         self.action = Action.grazing
-        --         self.velocity = vector(0, 0)
-        --     end
-    end
+    -- if self.action == Action.grazing then
+    --     -- 1/60 chance each frame to start walking
+    --     if love.math.random(1, 60) == 1 then
+    --         self.action = Action.walking
+    --         self.velocity = vector(
+    --             love.math.random(50, 60), love.math.random(50, 60)
+    --         )
+    --     end
+    --     -- elseif self.action == Action.walking then
+    --     --     -- 1/300 chance each frame to start grazing
+    --     --     if love.math.random(1, 10000) == 1 then
+    --     --         self.action = Action.grazing
+    --     --         self.velocity = vector(0, 0)
+    --     --     end
+    -- end
 
-    Sheep.super.update(self, dt)
     if self.action == Action.walking then
         self:update_neighbors()
-        self:seek_flock_center(0.001)
-        self:avoid_neighbors(0.05)
-        self:match_neighbors_velocities(0.05)
+        local v1 = self:seek_flock_center(0.01)
+        local v2 = self:avoid_neighbors(1)
+        local v3 = self:match_neighbor_velocity(0.05)
+
+        -- apply flock behaviors to velocity
+        self.velocity = self.velocity + v1 + v2 + v3
     end
+
+    -- apply velocity changes
+    Sheep.super.update(self, dt)
 end
 
 function Sheep:draw()
