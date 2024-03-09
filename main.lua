@@ -2,7 +2,7 @@
 -- steady 60 fps with 500 entities (bucketed)
 -- steady 30 fps with 1000 entities (bucketed)
 -- 20 fps with 1500, 12 fps with 2000 (bucketed)
-local NUM_SHEEP = 100
+local NUM_SHEEP = 200
 
 function get_bucket_vector_from_number(b)
     local i = (b % NUM_BUCKETS.x)
@@ -85,9 +85,9 @@ local function setup_sheep()
     for i, sheep in ipairs(SHEEPS) do
         -- if i % 2 == 1 then
         sheep.velocity = vector(
-            love.math.random(0, 1),
+            love.math.random(-1, 1),
             love.math.random(0, 1)
-        ):normalized() * 200
+        ):normalized() * 150
         sheep.action = Sheep.Action.walking
         -- end
     end

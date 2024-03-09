@@ -27,8 +27,25 @@ function Sheep:update_neighbors()
         local bucket_num = get_bucket_number_from_vector(bucket)
         for neighbor, _ in pairs(BUCKETS[bucket_num]) do
             if neighbor == self then goto continue end
-            if neighbor:center():dist(pos) <= VISION_RAD then
+            -- Check distance
+            if neighbor:center():dist(pos) > VISION_RAD then goto continue end
+            -- The point is close enough. Check the vision cone
+            -- -0.707
+
+            -- When stationary, assume a 360 deg vision cone
+            if self.velocity == vector(0, 0) then
                 NEIGHBORS[self][neighbor] = true
+            else
+                -- When not stationary, assume a 90 degree blind spot directly behind
+                -- forward direction of movement
+                local angle_to_neighbor = self.velocity:angleTo(
+                    neighbor:center() - pos
+                )
+                local lb = (math.pi * 3 / 4) -- 135 deg
+                local ub = (math.pi * 5 / 4) -- 225 deg
+                if angle_to_neighbor < lb or angle_to_neighbor > ub then
+                    NEIGHBORS[self][neighbor] = true
+                end
             end
             ::continue::
         end
@@ -114,9 +131,16 @@ end
 function Sheep:draw()
     love.graphics.setColor(1, 1, 1)
     if self == SHEEPS[1] then
-        love.graphics.setColor(1, 0, 0)
+        love.graphics.setColor(1, 1, 0)
         local c = self:center()
-        love.graphics.circle("line", c.x, c.y, VISION_RAD)
+        if self.velocity == vector.zero then
+            love.graphics.circle("line", c.x, c.y, VISION_RAD)
+        else
+            local angle_to_vel = self.velocity:angleTo(vector(1, 0))
+            local a1 = (math.pi * 2) + (math.pi * 3 / 4) + angle_to_vel
+            local a2 = (math.pi * 5 / 4) + angle_to_vel
+            love.graphics.arc("line", "pie", c.x, c.y, VISION_RAD, a1, a2)
+        end
         love.graphics.setColor(1, 0, 0)
     end
     if NEIGHBORS[SHEEPS[1]][self] then
