@@ -113,12 +113,15 @@ function Sheep.update(self, dt)
 
     if self.action == Action.walking then
         self:update_neighbors()
-        local v1 = self:seek_flock_center(0.01)
-        local v2 = self:avoid_neighbors(1)
-        local v3 = self:match_neighbor_velocity(0.05)
+        local v1 = self:seek_flock_center(0.1)
+        local v2 = self:avoid_neighbors(0.5)
+        local v3 = self:match_neighbor_velocity(0.125)
 
         -- apply flock behaviors to velocity
         self.velocity = self.velocity + v1 + v2 + v3
+        if self.velocity:len() > 300 then
+            self.velocity = self.velocity:normalizeInplace() * 300
+        end
     end
 
     -- apply velocity changes
@@ -149,8 +152,8 @@ function Sheep:draw()
     if self.velocity.x ~= 0 or self.velocity.y ~= 0 then
         -- Draw a line that represents the direction of velocity
         love.graphics.setColor(0, 1, 0, 0.5)
-        local vel_x = self.x + (self.w / 2) + (self.velocity.x * 1)
-        local vel_y = self.y + (self.h / 2) + (self.velocity.y * 1)
+        local vel_x = self.x + (self.w / 2) + (self.velocity.x * 0.1)
+        local vel_y = self.y + (self.h / 2) + (self.velocity.y * 0.1)
         love.graphics.line(self.x + (self.w / 2), self.y + (self.h / 2), vel_x, vel_y)
         love.graphics.setColor(1, 1, 1)
     end
