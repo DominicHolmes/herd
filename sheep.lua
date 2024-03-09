@@ -138,10 +138,10 @@ function Sheep.update(self, dt)
 
     if self.action == Action.walking then
         self:update_neighbors()
-        local v1 = self:seek_flock_center(5)
-        local v2 = self:avoid_neighbors(10)
-        local v3 = self:match_neighbor_velocity(2)
-        local v4 = self:avoid_obstacles(10)
+        local v1 = self:seek_flock_center(POWER.flock)
+        local v2 = self:avoid_neighbors(POWER.repel)
+        local v3 = self:match_neighbor_velocity(POWER.align)
+        local v4 = self:avoid_obstacles(POWER.wall)
         local total_dv = (v1 + v2 + v3 + v4) * dt
 
         -- apply flock behaviors to velocity

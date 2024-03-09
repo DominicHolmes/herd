@@ -66,7 +66,7 @@ end
 local function setup_sheep()
     local Sheep = require "sheep"
 
-    VISION_RAD = 100
+    VISION_RAD = 50
     SHEEPS = {}
     BUCKETS = {}
     NEIGHBORS = {}
@@ -105,6 +105,20 @@ local function setup_sheep()
     end
 end
 
+function setup_sliders()
+    require "libs/slider"
+    POWER = {
+        flock = 1,
+        repel = 7,
+        align = 3,
+        wall = 10
+    }
+    flockSlider = newSlider(100, 560, 150, POWER.flock, 0, 20, function(v) POWER.flock = v end)
+    repelSlider = newSlider(300, 560, 150, POWER.repel, 0, 20, function(v) POWER.repel = v end)
+    alignSlider = newSlider(500, 560, 150, POWER.align, 0, 20, function(v) POWER.align = v end)
+    wallSlider = newSlider(700, 560, 150, POWER.wall, 0, 20, function(v) POWER.wall = v end)
+end
+
 function love.load()
     vector = require "libs/hump/vector"
     enum = require "libs/enum"
@@ -116,12 +130,18 @@ function love.load()
     }
 
     setup_sheep()
+    setup_sliders()
 end
 
 function love.update(dt)
     for _, sheep in ipairs(SHEEPS) do
         sheep:update(dt)
     end
+
+    flockSlider:update()
+    wallSlider:update()
+    alignSlider:update()
+    repelSlider:update()
 end
 
 function love.draw()
@@ -157,10 +177,24 @@ function love.draw()
 
     love.graphics.setColor(1, 0, 0)
     love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+
+    love.graphics.setColor(1, 1, 1, 0.8)
+    flockSlider:draw()
+    love.graphics.print("FLOCK " .. math.floor(POWER.flock), 80, 530)
+    repelSlider:draw()
+    love.graphics.print("REPEL " .. math.floor(POWER.repel), 280, 530)
+    alignSlider:draw()
+    love.graphics.print("ALIGN " .. math.floor(POWER.align), 480, 530)
+    wallSlider:draw()
+    love.graphics.print("WALL " .. math.floor(POWER.wall), 680, 530)
 end
 
 function love.keypressed(key)
-    if key == "f1" then
+    if key == "f1" or key == "q" then
         love.event.quit("restart")
+    end
+
+    if key == "r" then
+        setup_sheep()
     end
 end
