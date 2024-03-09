@@ -91,10 +91,11 @@ function Sheep:match_neighbor_velocity(power)
 end
 
 function Sheep:avoid_obstacles(power)
-    local result = self:center() + (self.velocity * 4)
+    local result = self:center() + (self.velocity)
     local nudge = vector(0, 0)
     local nudge_amount = 20
-    if result.x < 30 then
+    local dist_to_edge = 100
+    if result.x < dist_to_edge then
         if result.y > window_size.h / 2 then
             -- Steer toward top right
             nudge = nudge + vector(nudge_amount, -nudge_amount)
@@ -102,7 +103,7 @@ function Sheep:avoid_obstacles(power)
             -- Steer toward bottom right
             nudge = nudge + vector(nudge_amount, nudge_amount)
         end
-    elseif result.x > window_size.w - 30 then
+    elseif result.x > window_size.w - dist_to_edge then
         if result.y > window_size.h / 2 then
             -- Steer toward top left
             nudge = nudge + vector(-nudge_amount, -nudge_amount)
@@ -111,7 +112,7 @@ function Sheep:avoid_obstacles(power)
             nudge = nudge + vector(-nudge_amount, nudge_amount)
         end
     end
-    if result.y < 30 then
+    if result.y < dist_to_edge then
         if result.x > window_size.w / 2 then
             -- Steer toward bottom left
             nudge = nudge + vector(-nudge_amount, nudge_amount)
@@ -119,7 +120,7 @@ function Sheep:avoid_obstacles(power)
             -- Steer toward bottom right
             nudge = nudge + vector(nudge_amount, nudge_amount)
         end
-    elseif result.y > window_size.h - 30 then
+    elseif result.y > window_size.h - dist_to_edge then
         if result.x > window_size.w / 2 then
             -- Steer toward top left
             nudge = nudge + vector(-nudge_amount, -nudge_amount)
@@ -143,6 +144,26 @@ function Sheep:avoid_obstacles(power)
     return power * nudge
 end
 
+function Sheep:tend_toward_location(location, power)
+    -- if power > 0, scale force to be stronger when further from target
+    -- if power < 0, scale force to be weaker when further from target
+    local toward_loc = (location - self:center()):normalized()
+
+    -- we have a vector pointing toward target
+    -- get the length of the vector
+    local distance_scale = 200
+    local distance_to_loc = math.min(location:dist(self:center()), distance_scale)
+
+    local distance_scaler = 0
+    if power < 0 then
+        distance_scaler = (distance_scale - distance_to_loc) / distance_scale
+    else
+        distance_scaler = distance_to_loc / distance_scale
+    end
+
+    return toward_loc * power * distance_scaler * 20
+end
+
 function Sheep.update(self, dt)
     -- if self.action == Action.grazing then
     --     -- 1/60 chance each frame to start walking
@@ -162,11 +183,22 @@ function Sheep.update(self, dt)
 
     if self.action == Action.walking then
         self:update_neighbors()
-        local v1 = self:seek_flock_center(POWER.flock / 2)
-        local v2 = self:avoid_neighbors(POWER.repel / 2)
-        local v3 = self:match_neighbor_velocity(POWER.align / 2)
-        local v4 = self:avoid_obstacles(POWER.wall / 2)
+        local v1 = self:seek_flock_center(POWER.flock / 100)
+        local v2 = self:avoid_neighbors(POWER.repel)
+        local v3 = self:match_neighbor_velocity(POWER.align)
+        local v4 = self:avoid_obstacles(POWER.wall)
+
+        if POWER.scatter then
+            v1 = -v1
+        end
+
         local total_dv = (v1 + v2 + v3 + v4) * dt
+
+        -- optional extras
+        if mouse_position ~= vector(0, 0) then
+            local v5 = self:tend_toward_location(mouse_position, POWER.follow)
+            total_dv = total_dv + (v5 * dt)
+        end
 
         -- apply flock behaviors to velocity
         self.velocity = self.velocity + total_dv

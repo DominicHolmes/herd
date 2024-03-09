@@ -2,7 +2,7 @@
 -- steady 60 fps with 500 entities (bucketed)
 -- steady 30 fps with 1000 entities (bucketed)
 -- 20 fps with 1500, 12 fps with 2000 (bucketed)
-local NUM_SHEEP = 50
+local NUM_SHEEP = 20
 
 function get_bucket_vector_from_number(b)
     local i = (b % NUM_BUCKETS.x)
@@ -66,7 +66,7 @@ end
 local function setup_sheep()
     local Sheep = require "sheep"
 
-    VISION_RAD = 50
+    VISION_RAD = 80
     SHEEPS = {}
     BUCKETS = {}
     NEIGHBORS = {}
@@ -108,10 +108,12 @@ end
 function setup_sliders()
     require "libs/slider"
     POWER = {
-        flock = 2,
-        repel = 3,
-        align = 3,
-        wall = 6
+        flock = 1,
+        repel = 4,
+        align = 2,
+        wall = 8,
+        follow = 4,
+        scatter = false,
     }
     flockSlider = newSlider(100, 560, 150, POWER.flock, 0, 20, function(v) POWER.flock = v end)
     repelSlider = newSlider(300, 560, 150, POWER.repel, 0, 20, function(v) POWER.repel = v end)
@@ -123,6 +125,9 @@ function love.load()
     vector = require "libs/hump/vector"
     enum = require "libs/enum"
     set = require "libs/set"
+
+    -- love.mouse.setVisible(false)
+    mouse_position = vector(0, 0)
 
     window_size = {
         w = love.graphics.getWidth(),
@@ -142,6 +147,11 @@ function love.update(dt)
     wallSlider:update()
     alignSlider:update()
     repelSlider:update()
+
+    -- local x, y = love.mouse.getPosition()
+    local m_x, m_y = love.mouse.getPosition()
+    mouse_position.x = m_x
+    mouse_position.y = m_y
 end
 
 function love.draw()
@@ -196,5 +206,13 @@ function love.keypressed(key)
 
     if key == "r" then
         setup_sheep()
+    end
+
+    if key == "p" then
+        POWER.flock = -POWER.flock
+    end
+
+    if key == "o" then
+        POWER.follow = -POWER.follow
     end
 end
