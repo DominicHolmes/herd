@@ -1,3 +1,9 @@
+-- 10 fps with 500 entities (unbucketed)
+-- steady 60 fps with 500 entities (bucketed)
+-- steady 30 fps with 1000 entities (bucketed)
+-- 20 fps with 1500, 12 fps with 2000 (bucketed)
+local NUM_SHEEP = 100
+
 function get_bucket_vector_from_number(b)
     local i = (b % NUM_BUCKETS.x)
     if i == 0 then
@@ -11,10 +17,14 @@ function get_bucket_number_from_vector(v)
     return ((v.y - 1) * NUM_BUCKETS.x) + v.x
 end
 
-function get_bucket_number_from_pixel(v)
+function get_bucket_vector_from_pixel(v)
     local bucket_i = math.min(1 + math.floor(v.x / VISION_RAD), NUM_BUCKETS.x)
-    local bucket_j = math.min(math.floor(v.y / VISION_RAD), NUM_BUCKETS.y - 1)
-    return bucket_i + (bucket_j * NUM_BUCKETS.y)
+    local bucket_j = math.min(1 + math.floor(v.y / VISION_RAD), NUM_BUCKETS.y)
+    return vector(bucket_i, bucket_j)
+end
+
+function get_bucket_number_from_pixel(v)
+    return get_bucket_number_from_vector(get_bucket_vector_from_pixel(v))
 end
 
 function get_buckets_surrounding(b)
@@ -57,35 +67,18 @@ local function setup_sheep()
     -- Generate all buckets of size VISION_RADIUS
     for i = 1, NUM_BUCKETS.x do
         for j = 1, NUM_BUCKETS.y do
-            bucket_num = ((j - 1) * NUM_BUCKETS.x) + i
-            -- if not (vector(i, j) == get_buckets_surrounding(bucket_num)) then
-            --     print("num buckets: ", NUM_BUCKETS)
-            --     print("NOT EQUAL: ")
-            --     print("bucket_num " .. bucket_num)
-            --     local m = get_buckets_surrounding(bucket_num)
-            --     print("original: ")
-            --     print("i: ", i, "   j: ", j)
-            --     print("after func call: ")
-            --     print("i: ", m.x, "   j: ", m.y)
-            --     assert(false)
-            -- end
+            bucket_num = get_bucket_number_from_vector(vector(i, j))
             BUCKETS[bucket_num] = {}
         end
     end
 
-    for _, b in ipairs(get_buckets_surrounding(80)) do
-        -- print(b)
-        print(get_bucket_number_from_vector(b))
-    end
-
-    -- 10 fps with 500 entities (unbucketed)
-    for i = 1, 500 do
+    for i = 1, NUM_SHEEP do
         local x = love.math.random(0, window_size.w)
         local y = love.math.random(0, window_size.h)
         local new_sheep = Sheep(x, y)
         table.insert(SHEEPS, new_sheep)
         local bucket_num = get_bucket_number_from_pixel(vector(x, y))
-        new_sheep.bucket_num = bucket_num
+        new_sheep.bucket = bucket_num
         BUCKETS[bucket_num][new_sheep] = true
     end
 
@@ -120,11 +113,13 @@ function love.update(dt)
 end
 
 function love.draw()
-    for _, vec in ipairs(get_buckets_surrounding(18)) do
+    local highlight_bucket = SHEEPS[1].bucket
+
+    for _, vec in ipairs(get_buckets_surrounding(highlight_bucket)) do
         local x = (vec.x - 1) * VISION_RAD
         local y = (vec.y - 1) * VISION_RAD
         local bucket_num = get_bucket_number_from_vector(vec)
-        if bucket_num == 18 then
+        if bucket_num == highlight_bucket then
             love.graphics.setColor(0, 1, 0, 0.5)
         else
             love.graphics.setColor(0, 1, 0, 0.2)
