@@ -83,13 +83,13 @@ local function setup_sheep()
     end
 
     for i, sheep in ipairs(SHEEPS) do
-        if i % 2 == 1 then
-            sheep.velocity = vector(
-                love.math.random(-30, 30),
-                love.math.random(-30, 30)
-            )
-            sheep.action = Sheep.Action.walking
-        end
+        -- if i % 2 == 1 then
+        sheep.velocity = vector(
+            love.math.random(0, 1),
+            love.math.random(0, 1)
+        ):normalized() * 200
+        sheep.action = Sheep.Action.walking
+        -- end
     end
 end
 
