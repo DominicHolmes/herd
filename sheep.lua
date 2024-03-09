@@ -91,18 +91,42 @@ function Sheep:match_neighbor_velocity(power)
 end
 
 function Sheep:avoid_obstacles(power)
-    local result = self:center() + (self.velocity * 1)
+    local result = self:center() + (self.velocity * 4)
     local nudge = vector(0, 0)
     local nudge_amount = 20
-    if result.x < 10 then
-        nudge.x = nudge.x + nudge_amount
-    elseif result.x > window_size.w - 10 then
-        nudge.x = nudge.x - nudge_amount
+    if result.x < 30 then
+        if result.y > window_size.h / 2 then
+            -- Steer toward top right
+            nudge = nudge + vector(nudge_amount, -nudge_amount)
+        else
+            -- Steer toward bottom right
+            nudge = nudge + vector(nudge_amount, nudge_amount)
+        end
+    elseif result.x > window_size.w - 30 then
+        if result.y > window_size.h / 2 then
+            -- Steer toward top left
+            nudge = nudge + vector(-nudge_amount, -nudge_amount)
+        else
+            -- Steer toward bottom left
+            nudge = nudge + vector(-nudge_amount, nudge_amount)
+        end
     end
-    if result.y < 10 then
-        nudge.y = nudge.y + nudge_amount
-    elseif result.y > window_size.h - 10 then
-        nudge.y = nudge.y - nudge_amount
+    if result.y < 30 then
+        if result.x > window_size.w / 2 then
+            -- Steer toward bottom left
+            nudge = nudge + vector(-nudge_amount, nudge_amount)
+        else
+            -- Steer toward bottom right
+            nudge = nudge + vector(nudge_amount, nudge_amount)
+        end
+    elseif result.y > window_size.h - 30 then
+        if result.x > window_size.w / 2 then
+            -- Steer toward top left
+            nudge = nudge + vector(-nudge_amount, -nudge_amount)
+        else
+            -- Steer toward top right
+            nudge = nudge + vector(nudge_amount, -nudge_amount)
+        end
     end
 
     -- -- Nudge is the inverse of velocity
@@ -138,10 +162,10 @@ function Sheep.update(self, dt)
 
     if self.action == Action.walking then
         self:update_neighbors()
-        local v1 = self:seek_flock_center(POWER.flock)
-        local v2 = self:avoid_neighbors(POWER.repel)
-        local v3 = self:match_neighbor_velocity(POWER.align)
-        local v4 = self:avoid_obstacles(POWER.wall)
+        local v1 = self:seek_flock_center(POWER.flock / 2)
+        local v2 = self:avoid_neighbors(POWER.repel / 2)
+        local v3 = self:match_neighbor_velocity(POWER.align / 2)
+        local v4 = self:avoid_obstacles(POWER.wall / 2)
         local total_dv = (v1 + v2 + v3 + v4) * dt
 
         -- apply flock behaviors to velocity

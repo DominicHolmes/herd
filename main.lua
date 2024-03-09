@@ -108,10 +108,10 @@ end
 function setup_sliders()
     require "libs/slider"
     POWER = {
-        flock = 1,
-        repel = 7,
+        flock = 2,
+        repel = 3,
         align = 3,
-        wall = 10
+        wall = 6
     }
     flockSlider = newSlider(100, 560, 150, POWER.flock, 0, 20, function(v) POWER.flock = v end)
     repelSlider = newSlider(300, 560, 150, POWER.repel, 0, 20, function(v) POWER.repel = v end)
