@@ -95,7 +95,7 @@ function Sheep:match_neighbor_velocity(power)
 end
 
 function Sheep:avoid_obstacles(power)
-    local result = self:center() + self.velocity
+    local result = self:center() + (self.velocity * 0.1)
     local nudge = vector.zero
     local nudge_amount = 10
 
