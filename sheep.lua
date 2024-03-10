@@ -5,7 +5,7 @@ local Action = enum { "grazing", "walking", "herding" }
 Sheep.Action = Action
 
 function Sheep:new(x, y)
-    Sheep.super.new(self, x, y, 10, 10)
+    Sheep.super.new(self, x, y, 8, 8)
     self.action = Action.walking
     self.bucket = -1
 end
@@ -52,7 +52,7 @@ end
 
 function Sheep:avoid_neighbors(power)
     -- distance to maintain from other sheep
-    local maintain_distance = 15
+    local maintain_distance = self.w * 1.5
     local move = vector(0, 0)
     local pos = self:center()
     for neighbor, _ in pairs(NEIGHBORS[self]) do
@@ -129,18 +129,6 @@ function Sheep:avoid_obstacles(power)
             nudge = nudge + vector(nudge_amount, -nudge_amount)
         end
     end
-
-    -- -- Nudge is the inverse of velocity
-    -- if result.x < 10 then
-    --     nudge.x = -self.velocity.x
-    -- elseif result.x > window_size.w - 10 then
-    --     nudge.x = -self.velocity.x
-    -- end
-    -- if result.y < 10 then
-    --     nudge.y = -self.velocity.y
-    -- elseif result.y > window_size.h - 10 then
-    --     nudge.y = -self.velocity.y
-    -- end
     return power * nudge
 end
 
@@ -165,22 +153,6 @@ function Sheep:tend_toward_location(location, power)
 end
 
 function Sheep.update(self, dt)
-    -- if self.action == Action.grazing then
-    --     -- 1/60 chance each frame to start walking
-    --     if love.math.random(1, 60) == 1 then
-    --         self.action = Action.walking
-    --         self.velocity = vector(
-    --             love.math.random(50, 60), love.math.random(50, 60)
-    --         )
-    --     end
-    --     -- elseif self.action == Action.walking then
-    --     --     -- 1/300 chance each frame to start grazing
-    --     --     if love.math.random(1, 10000) == 1 then
-    --     --         self.action = Action.grazing
-    --     --         self.velocity = vector(0, 0)
-    --     --     end
-    -- end
-
     if self.action == Action.walking then
         self:update_neighbors()
         local v1 = self:seek_flock_center(POWER.flock / 100)
@@ -209,11 +181,13 @@ function Sheep.update(self, dt)
 
     -- apply velocity changes
     Sheep.super.update(self, dt)
+    -- update animation
+    sheep_animation:update(dt)
 end
 
 function Sheep:draw()
     love.graphics.setColor(1, 1, 1)
-    if self == SHEEPS[1] then
+    if self == SHEEPS[1] and DEBUG_DRAW then
         love.graphics.setColor(1, 1, 0)
         local c = self:center()
         if self.velocity == vector(0, 0) then
@@ -226,13 +200,14 @@ function Sheep:draw()
         end
         love.graphics.setColor(1, 0, 0)
     end
-    if NEIGHBORS[SHEEPS[1]][self] then
+    if NEIGHBORS[SHEEPS[1]][self] and DEBUG_DRAW then
         -- Color neighbors yellow
         love.graphics.setColor(0.5, 0.5, 0)
     end
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 
-    if self.velocity.x ~= 0 or self.velocity.y ~= 0 then
+    sheep_animation:draw(sprite_image, self.x, self.y)
+
+    if (self.velocity.x ~= 0 or self.velocity.y ~= 0) and DEBUG_DRAW then
         -- Draw a line that represents the direction of velocity
         love.graphics.setColor(0, 1, 0, 0.5)
         local vel_x = self.x + (self.w / 2) + (self.velocity.x * 0.4)

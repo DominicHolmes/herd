@@ -3,6 +3,133 @@
 -- steady 30 fps with 1000 entities (bucketed)
 -- 20 fps with 1500, 12 fps with 2000 (bucketed)
 local NUM_SHEEP = 20
+local BUCKET_SIZE = 32
+
+function love.load()
+    vector = require "libs/hump/vector"
+    enum = require "libs/enum"
+    set = require "libs/set"
+    sti = require "libs/sti"
+    mr = require('libs/multiresolution')
+
+    DEBUG_DRAW = false
+
+    local gameWidth, gameHeight = 400, 304 --fixed game resolution
+    love.window.setMode(1400, 900, { resizable = true, borderless = false })
+    mr.load(gameWidth, gameHeight)
+
+    -- love.mouse.setVisible(false)
+    mouse_position = vector(0, 0)
+
+    window_size = {
+        w = gameWidth,
+        h = gameHeight
+    }
+
+    setup_sheep()
+    setup_sliders()
+    setup_sprites()
+    game_map = sti("maps/forest_farm.lua")
+end
+
+function love.update(dt)
+    for _, sheep in ipairs(SHEEPS) do
+        sheep:update(dt)
+    end
+
+    flockSlider:update()
+    wallSlider:update()
+    alignSlider:update()
+    repelSlider:update()
+
+    -- local x, y = love.mouse.getPosition()
+    -- local m_x, m_y = love.mouse.getPosition()
+    mouse_position.x = mr.getMouseX()
+    mouse_position.y = mr.getMouseY()
+
+    game_map:update(dt)
+end
+
+function love.resize()
+    mr.resize()
+end
+
+function love.draw()
+    love.graphics.setColor(1, 1, 1)
+    game_map:draw(mr.translateX / mr.scale, mr.translateY / mr.scale, mr.scale, mr.scale)
+    mr.draw()
+
+    for _, sheep in ipairs(SHEEPS) do
+        sheep:draw()
+    end
+
+    if DEBUG_DRAW then
+        local highlight_bucket = SHEEPS[1].bucket
+        for _, vec in ipairs(get_buckets_surrounding(highlight_bucket, false)) do
+            local x = (vec.x - 1) * VISION_RAD
+            local y = (vec.y - 1) * VISION_RAD
+            local bucket_num = get_bucket_number_from_vector(vec)
+            if bucket_num == highlight_bucket then
+                love.graphics.setColor(0, 1, 0, 0.5)
+            else
+                love.graphics.setColor(0, 1, 0, 0.2)
+            end
+            love.graphics.rectangle("fill", x, y, VISION_RAD, VISION_RAD)
+        end
+
+        -- Draw all buckets
+        for i = 1, NUM_BUCKETS.x do
+            for j = 1, NUM_BUCKETS.y do
+                local bucket_num = ((j - 1) * NUM_BUCKETS.x) + i
+                local x = (i - 1) * VISION_RAD
+                local y = (j - 1) * VISION_RAD
+                love.graphics.setColor(0, 1, 0, 0.3)
+                love.graphics.rectangle("line", x, y, VISION_RAD, VISION_RAD)
+                love.graphics.print(bucket_num, x + 10, y + 10)
+            end
+        end
+
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+        love.graphics.print(mr.getMouseX() .. " " .. mr.getMouseY(), 40, 10)
+
+        love.graphics.setColor(1, 1, 1, 0.8)
+        flockSlider:draw()
+        love.graphics.print("FLOCK " .. math.floor(POWER.flock), 80, 530)
+        repelSlider:draw()
+        love.graphics.print("REPEL " .. math.floor(POWER.repel), 280, 530)
+        alignSlider:draw()
+        love.graphics.print("ALIGN " .. math.floor(POWER.align), 480, 530)
+        wallSlider:draw()
+        love.graphics.print("WALL " .. math.floor(POWER.wall), 680, 530)
+    end
+end
+
+function love.keypressed(key)
+    if key == "f1" or key == "q" then
+        love.event.quit("restart")
+    end
+
+    if key == "r" then
+        setup_sheep()
+    end
+
+    if key == "p" then
+        POWER.flock = -POWER.flock
+    end
+
+    if key == "o" then
+        POWER.follow = -POWER.follow
+    end
+end
+
+function setup_sprites()
+    local anim8 = require "libs/anim8"
+    sprite_image = love.graphics.newImage("assets/animals.png")
+    sprite_image:setFilter("nearest", "nearest")
+    local grid = anim8.newGrid(8, 8, sprite_image:getWidth(), sprite_image:getHeight())
+    sheep_animation = anim8.newAnimation(grid(4, "1-4"), 5)
+end
 
 function get_bucket_vector_from_number(b)
     local i = (b % NUM_BUCKETS.x)
@@ -63,10 +190,10 @@ function get_buckets_surrounding(b, wrap_around)
     return nearby
 end
 
-local function setup_sheep()
+function setup_sheep()
     local Sheep = require "sheep"
 
-    VISION_RAD = 80
+    VISION_RAD = BUCKET_SIZE
     SHEEPS = {}
     BUCKETS = {}
     NEIGHBORS = {}
@@ -119,100 +246,4 @@ function setup_sliders()
     repelSlider = newSlider(300, 560, 150, POWER.repel, 0, 20, function(v) POWER.repel = v end)
     alignSlider = newSlider(500, 560, 150, POWER.align, 0, 20, function(v) POWER.align = v end)
     wallSlider = newSlider(700, 560, 150, POWER.wall, 0, 20, function(v) POWER.wall = v end)
-end
-
-function love.load()
-    vector = require "libs/hump/vector"
-    enum = require "libs/enum"
-    set = require "libs/set"
-
-    -- love.mouse.setVisible(false)
-    mouse_position = vector(0, 0)
-
-    window_size = {
-        w = love.graphics.getWidth(),
-        h = love.graphics.getHeight()
-    }
-
-    setup_sheep()
-    setup_sliders()
-end
-
-function love.update(dt)
-    for _, sheep in ipairs(SHEEPS) do
-        sheep:update(dt)
-    end
-
-    flockSlider:update()
-    wallSlider:update()
-    alignSlider:update()
-    repelSlider:update()
-
-    -- local x, y = love.mouse.getPosition()
-    local m_x, m_y = love.mouse.getPosition()
-    mouse_position.x = m_x
-    mouse_position.y = m_y
-end
-
-function love.draw()
-    local highlight_bucket = SHEEPS[1].bucket
-
-    for _, vec in ipairs(get_buckets_surrounding(highlight_bucket, false)) do
-        local x = (vec.x - 1) * VISION_RAD
-        local y = (vec.y - 1) * VISION_RAD
-        local bucket_num = get_bucket_number_from_vector(vec)
-        if bucket_num == highlight_bucket then
-            love.graphics.setColor(0, 1, 0, 0.5)
-        else
-            love.graphics.setColor(0, 1, 0, 0.2)
-        end
-        love.graphics.rectangle("fill", x, y, VISION_RAD, VISION_RAD)
-    end
-
-    for _, sheep in ipairs(SHEEPS) do
-        sheep:draw()
-    end
-
-    -- Draw all buckets
-    for i = 1, NUM_BUCKETS.x do
-        for j = 1, NUM_BUCKETS.y do
-            local bucket_num = ((j - 1) * NUM_BUCKETS.x) + i
-            local x = (i - 1) * VISION_RAD
-            local y = (j - 1) * VISION_RAD
-            love.graphics.setColor(0, 1, 0, 0.3)
-            love.graphics.rectangle("line", x, y, VISION_RAD, VISION_RAD)
-            love.graphics.print(bucket_num, x + 10, y + 10)
-        end
-    end
-
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
-
-    love.graphics.setColor(1, 1, 1, 0.8)
-    flockSlider:draw()
-    love.graphics.print("FLOCK " .. math.floor(POWER.flock), 80, 530)
-    repelSlider:draw()
-    love.graphics.print("REPEL " .. math.floor(POWER.repel), 280, 530)
-    alignSlider:draw()
-    love.graphics.print("ALIGN " .. math.floor(POWER.align), 480, 530)
-    wallSlider:draw()
-    love.graphics.print("WALL " .. math.floor(POWER.wall), 680, 530)
-end
-
-function love.keypressed(key)
-    if key == "f1" or key == "q" then
-        love.event.quit("restart")
-    end
-
-    if key == "r" then
-        setup_sheep()
-    end
-
-    if key == "p" then
-        POWER.flock = -POWER.flock
-    end
-
-    if key == "o" then
-        POWER.follow = -POWER.follow
-    end
 end

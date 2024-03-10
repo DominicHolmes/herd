@@ -1,0 +1,39 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "ground.tsx": {
+            "scaleInDock": 3.7131,
+            "scaleInEditor": 14.02
+        },
+        "land_tileset.tsx": {
+            "scaleInDock": 3.4937,
+            "scaleInEditor": 12.08
+        }
+    },
+    "last.exportedFilePath": "/Users/dominicholmes/Developer/love/herd/maps",
+    "last.imagePath": "/Users/dominicholmes/Developer/love/herd/maps",
+    "map.height": 38,
+    "map.lastUsedExportFilter": "Lua files (*.lua)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 8,
+    "map.tileWidth": 8,
+    "map.width": 50,
+    "openFiles": [
+    ],
+    "project": "tiled.tiled-project",
+    "recentFiles": [
+        "land_tileset.tsx",
+        "ground.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 8,
+        "width": 8
+    }
+}
