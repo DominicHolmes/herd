@@ -2,7 +2,7 @@
 -- steady 60 fps with 500 entities (bucketed)
 -- steady 30 fps with 1000 entities (bucketed)
 -- 20 fps with 1500, 12 fps with 2000 (bucketed)
-local NUM_SHEEP = 100
+local NUM_SHEEP = 20
 local BUCKET_SIZE = 32
 
 function love.load()

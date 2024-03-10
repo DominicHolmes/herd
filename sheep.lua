@@ -91,45 +91,65 @@ function Sheep:match_neighbor_velocity(power)
 end
 
 function Sheep:avoid_obstacles(power)
-    local result = self:center() + (self.velocity)
+    -- local result = self:center() + (self.velocity)
     local nudge = vector(0, 0)
-    local nudge_amount = 20
-    local dist_to_edge = 20
-    if result.x < dist_to_edge then
-        if result.y > window_size.h / 2 then
-            -- Steer toward top right
-            nudge = nudge + vector(nudge_amount, -nudge_amount)
-        else
-            -- Steer toward bottom right
-            nudge = nudge + vector(nudge_amount, nudge_amount)
-        end
-    elseif result.x > window_size.w - dist_to_edge then
-        if result.y > window_size.h / 2 then
-            -- Steer toward top left
-            nudge = nudge + vector(-nudge_amount, -nudge_amount)
-        else
-            -- Steer toward bottom left
-            nudge = nudge + vector(-nudge_amount, nudge_amount)
-        end
+    -- local nudge_amount = 40
+    local dist_to_edge = 50
+    local nudge_amount = 2
+    local pos = self:center()
+
+    if pos.x < dist_to_edge then
+        self.velocity.x = self.velocity.x + nudge_amount
     end
-    if result.y < dist_to_edge then
-        if result.x > window_size.w / 2 then
-            -- Steer toward bottom left
-            nudge = nudge + vector(-nudge_amount, nudge_amount)
-        else
-            -- Steer toward bottom right
-            nudge = nudge + vector(nudge_amount, nudge_amount)
-        end
-    elseif result.y > window_size.h - dist_to_edge then
-        if result.x > window_size.w / 2 then
-            -- Steer toward top left
-            nudge = nudge + vector(-nudge_amount, -nudge_amount)
-        else
-            -- Steer toward top right
-            nudge = nudge + vector(nudge_amount, -nudge_amount)
-        end
+    if pos.x > window_size.w - dist_to_edge then
+        self.velocity.x = self.velocity.x - nudge_amount
     end
-    return power * nudge
+    if pos.y < dist_to_edge then
+        self.velocity.y = self.velocity.y + nudge_amount
+    end
+    if pos.y > window_size.h - dist_to_edge then
+        self.velocity.y = self.velocity.y - nudge_amount
+    end
+
+    return vector(0, 0)
+
+
+
+    -- if result.x < dist_to_edge then
+    --     if result.y > window_size.h / 2 then
+    --         -- Steer toward top right
+    --         nudge = nudge + vector(nudge_amount, -nudge_amount)
+    --     else
+    --         -- Steer toward bottom right
+    --         nudge = nudge + vector(nudge_amount, nudge_amount)
+    --     end
+    -- elseif result.x > window_size.w - dist_to_edge then
+    --     if result.y > window_size.h / 2 then
+    --         -- Steer toward top left
+    --         nudge = nudge + vector(-nudge_amount, -nudge_amount)
+    --     else
+    --         -- Steer toward bottom left
+    --         nudge = nudge + vector(-nudge_amount, nudge_amount)
+    --     end
+    -- end
+    -- if result.y < dist_to_edge then
+    --     if result.x > window_size.w / 2 then
+    --         -- Steer toward bottom left
+    --         nudge = nudge + vector(-nudge_amount, nudge_amount)
+    --     else
+    --         -- Steer toward bottom right
+    --         nudge = nudge + vector(nudge_amount, nudge_amount)
+    --     end
+    -- elseif result.y > window_size.h - dist_to_edge then
+    --     if result.x > window_size.w / 2 then
+    --         -- Steer toward top left
+    --         nudge = nudge + vector(-nudge_amount, -nudge_amount)
+    --     else
+    --         -- Steer toward top right
+    --         nudge = nudge + vector(nudge_amount, -nudge_amount)
+    --     end
+    -- end
+    -- return power * nudge
 end
 
 function Sheep:tend_toward_location(location, power)
@@ -165,8 +185,8 @@ function Sheep.update(self, dt)
 
         -- apply flock behaviors to velocity
         self.velocity = self.velocity + total_dv
-        if self.velocity:len() > 100 then
-            self.velocity = self.velocity:normalizeInplace() * 100
+        if self.velocity:len() > 30 then
+            self.velocity = self.velocity:normalizeInplace() * 30
         end
     end
 
