@@ -2,7 +2,7 @@
 -- steady 60 fps with 500 entities (bucketed)
 -- steady 30 fps with 1000 entities (bucketed)
 -- 20 fps with 1500, 12 fps with 2000 (bucketed)
-local NUM_SHEEP = 20
+local NUM_SHEEP = 100
 local BUCKET_SIZE = 32
 
 function love.load()
@@ -12,7 +12,7 @@ function love.load()
     sti = require "libs/sti"
     mr = require('libs/multiresolution')
 
-    DEBUG_DRAW = false
+    DEBUG_DRAW = true
 
     local gameWidth, gameHeight = 400, 304 --fixed game resolution
     love.window.setMode(1400, 900, { resizable = true, borderless = false })
@@ -39,15 +39,13 @@ function love.update(dt)
     end
     dog:update(dt)
 
-    flockSlider:update()
-    wallSlider:update()
-    alignSlider:update()
-    repelSlider:update()
-
-    -- local x, y = love.mouse.getPosition()
-    -- local m_x, m_y = love.mouse.getPosition()
     mouse_position.x = mr.getMouseX()
     mouse_position.y = mr.getMouseY()
+
+    flockSlider:update(mouse_position.x, mouse_position.y)
+    wallSlider:update(mouse_position.x, mouse_position.y)
+    alignSlider:update(mouse_position.x, mouse_position.y)
+    repelSlider:update(mouse_position.x, mouse_position.y)
 
     game_map:update(dt)
 end
@@ -98,18 +96,33 @@ function love.draw()
 
         love.graphics.setColor(1, 0, 0)
         love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
-        love.graphics.print(mr.getMouseX() .. " " .. mr.getMouseY(), 40, 10)
+        love.graphics.print(mr.getMouseX() .. " " .. mr.getMouseY(), 150, 10)
 
         love.graphics.setColor(1, 1, 1, 0.8)
         flockSlider:draw()
-        love.graphics.print("FLOCK " .. math.floor(POWER.flock), 80, 530)
+        love.graphics.print("FLOCK " .. math.floor(POWER.flock), 20, 260)
         repelSlider:draw()
-        love.graphics.print("REPEL " .. math.floor(POWER.repel), 280, 530)
+        love.graphics.print("REPEL " .. math.floor(POWER.repel), 120, 260)
         alignSlider:draw()
-        love.graphics.print("ALIGN " .. math.floor(POWER.align), 480, 530)
+        love.graphics.print("ALIGN " .. math.floor(POWER.align), 220, 260)
         wallSlider:draw()
-        love.graphics.print("WALL " .. math.floor(POWER.wall), 680, 530)
+        love.graphics.print("WALL " .. math.floor(POWER.wall), 320, 260)
     end
+end
+
+function setup_sliders()
+    require "libs/slider"
+    POWER = {
+        flock = 1,
+        repel = 4,
+        align = 2,
+        wall = 8,
+        follow = 4,
+    }
+    flockSlider = newSlider(40, 285, 80, POWER.flock, 0, 20, function(v) POWER.flock = v end)
+    repelSlider = newSlider(140, 285, 80, POWER.repel, 0, 20, function(v) POWER.repel = v end)
+    alignSlider = newSlider(240, 285, 80, POWER.align, 0, 20, function(v) POWER.align = v end)
+    wallSlider = newSlider(340, 285, 80, POWER.wall, 0, 20, function(v) POWER.wall = v end)
 end
 
 function love.keypressed(key)
@@ -242,20 +255,4 @@ function setup_sheep()
         sheep.action = Sheep.Action.walking
         -- end
     end
-end
-
-function setup_sliders()
-    require "libs/slider"
-    POWER = {
-        flock = 1,
-        repel = 4,
-        align = 2,
-        wall = 8,
-        follow = 4,
-        scatter = false,
-    }
-    flockSlider = newSlider(100, 560, 150, POWER.flock, 0, 20, function(v) POWER.flock = v end)
-    repelSlider = newSlider(300, 560, 150, POWER.repel, 0, 20, function(v) POWER.repel = v end)
-    alignSlider = newSlider(500, 560, 150, POWER.align, 0, 20, function(v) POWER.align = v end)
-    wallSlider = newSlider(700, 560, 150, POWER.wall, 0, 20, function(v) POWER.wall = v end)
 end

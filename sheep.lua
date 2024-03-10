@@ -94,7 +94,7 @@ function Sheep:avoid_obstacles(power)
     local result = self:center() + (self.velocity)
     local nudge = vector(0, 0)
     local nudge_amount = 20
-    local dist_to_edge = 100
+    local dist_to_edge = 20
     if result.x < dist_to_edge then
         if result.y > window_size.h / 2 then
             -- Steer toward top right
@@ -139,7 +139,7 @@ function Sheep:tend_toward_location(location, power)
 
     -- we have a vector pointing toward target
     -- get the length of the vector
-    local distance_scale = 200
+    local distance_scale = 100
     local distance_to_loc = math.min(location:dist(self:center()), distance_scale)
 
     local distance_scaler = 0
@@ -159,23 +159,14 @@ function Sheep.update(self, dt)
         local v2 = self:avoid_neighbors(POWER.repel)
         local v3 = self:match_neighbor_velocity(POWER.align)
         local v4 = self:avoid_obstacles(POWER.wall)
+        local v5 = self:tend_toward_location(dog:center(), -POWER.follow)
 
-        if POWER.scatter then
-            v1 = -v1
-        end
-
-        local total_dv = (v1 + v2 + v3 + v4) * dt
-
-        -- optional extras
-        if mouse_position ~= vector(0, 0) then
-            local v5 = self:tend_toward_location(mouse_position, POWER.follow)
-            total_dv = total_dv + (v5 * dt)
-        end
+        local total_dv = (v1 + v2 + v3 + v4 + v5) * dt
 
         -- apply flock behaviors to velocity
         self.velocity = self.velocity + total_dv
-        if self.velocity:len() > 200 then
-            self.velocity = self.velocity:normalizeInplace() * 200
+        if self.velocity:len() > 100 then
+            self.velocity = self.velocity:normalizeInplace() * 100
         end
     end
 
