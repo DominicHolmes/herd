@@ -48,9 +48,19 @@ function Dog:update(dt)
     self.velocity = self.speed * dv * dt
 
     if self.velocity:len() > 0 then
+        -- Velocity is non-zero, dog is running
         self.action = Action.running
     elseif self.action == Action.running then
+        -- Velocity is zero and dog was running, time to stand still
         self.action = Action.standing
+        self.last_ran = love.timer.getTime()
+    elseif self.action == Action.standing then
+        -- Dog is standing still
+        local standing_time = love.timer.getTime() - self.last_ran
+        -- If it has been standing for 2 sec, time to sit down :3
+        if standing_time > 2 then
+            self.action = Action.idle
+        end
     end
 
     animation[self.action]:update(dt)
