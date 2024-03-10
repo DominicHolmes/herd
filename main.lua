@@ -127,8 +127,8 @@ function setup_sprites()
     local anim8 = require "libs/anim8"
     sprite_image = love.graphics.newImage("assets/animals.png")
     sprite_image:setFilter("nearest", "nearest")
-    local grid = anim8.newGrid(8, 8, sprite_image:getWidth(), sprite_image:getHeight())
-    sheep_animation = anim8.newAnimation(grid(4, "1-4"), 5)
+    sprite_grid = anim8.newGrid(8, 8, sprite_image:getWidth(), sprite_image:getHeight(), 0, 0, 1)
+    sheep_animation = anim8.newAnimation(sprite_grid(1, "1-4"), 5)
 end
 
 function get_bucket_vector_from_number(b)
