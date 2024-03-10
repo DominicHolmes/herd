@@ -29,6 +29,7 @@ function love.load()
     setup_sheep()
     setup_sliders()
     setup_sprites()
+    setup_dog()
     game_map = sti("maps/forest_farm.lua")
 end
 
@@ -36,6 +37,7 @@ function love.update(dt)
     for _, sheep in ipairs(SHEEPS) do
         sheep:update(dt)
     end
+    dog:update(dt)
 
     flockSlider:update()
     wallSlider:update()
@@ -59,10 +61,15 @@ function love.draw()
     game_map:draw(mr.translateX / mr.scale, mr.translateY / mr.scale, mr.scale, mr.scale)
     mr.draw()
 
+    -- Draw sheep
     for _, sheep in ipairs(SHEEPS) do
         sheep:draw()
     end
 
+    -- Draw dog
+    dog:draw()
+
+    -- Draw debug stuff
     if DEBUG_DRAW then
         local highlight_bucket = SHEEPS[1].bucket
         for _, vec in ipairs(get_buckets_surrounding(highlight_bucket, false)) do
@@ -129,6 +136,11 @@ function setup_sprites()
     sprite_image:setFilter("nearest", "nearest")
     sprite_grid = anim8.newGrid(8, 8, sprite_image:getWidth(), sprite_image:getHeight(), 0, 0, 1)
     sheep_animation = anim8.newAnimation(sprite_grid(1, "1-4"), 5)
+end
+
+function setup_dog()
+    local Dog = require "dog"
+    dog = Dog(100, 100)
 end
 
 function get_bucket_vector_from_number(b)
