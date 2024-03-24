@@ -12,7 +12,7 @@ function love.load()
     sti = require "libs/sti"
     mr = require('libs/multiresolution')
 
-    DEBUG_DRAW = true
+    DEBUG_DRAW = false
 
     local gameWidth, gameHeight = 400, 304 --fixed game resolution
     love.window.setMode(1400, 900, { resizable = true, borderless = false })
